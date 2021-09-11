@@ -10,7 +10,7 @@ export default class QueryBuilder {
   }
 
   static findUserByEmail(email: string) {
-    return `SELECT ID
+    return `SELECT ID, EMAIL, FIRST_NAME, LAST_NAME, PASSWORD
             FROM USERS USR
             WHERE USR.EMAIL = '${email}'`;
   }

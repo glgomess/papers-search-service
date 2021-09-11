@@ -64,6 +64,7 @@ class App {
     err: Error,
     req: Request,
     res: Response,
+    // eslint-disable-next-line no-unused-vars
     next: NextFunction,
   ) {
     console.log(err.message);
