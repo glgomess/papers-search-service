@@ -1,5 +1,4 @@
 import bcrypt from 'bcrypt';
-import { Query } from 'pg';
 import DBClient from '../database/postgres';
 import { NewUserInterface, UserInterface } from '../interfaces';
 import QueryBuilder from '../database/queries';
