@@ -1,17 +1,35 @@
 import express, { Response, Request, NextFunction } from 'express';
 import { body, validationResult } from 'express-validator';
-import { NewUserInterface } from '../interfaces';
+import { NewUserInterface, UserInterface } from '../interfaces';
 import AuthService from '../services/auth.service';
 
 const routes = express.Router();
 
-// routes.get(
-//   '/login',
-//   async (req: Request, res: Response, next: NextFunction) => {
-//     try {
-//     } catch (e) {}
-//   },
-// );
+routes.get(
+  '/login',
+  body('email', 'Invalid email')
+    .isEmail()
+    .isLowercase(),
+  body('password', 'Invalid password')
+    .isAlphanumeric()
+    .isLength({ max: 20 }),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        throw errors;
+      }
+
+      const user: UserInterface = req.body;
+      const authService = new AuthService();
+      const completeUserData = await authService.login(user);
+
+      return res.status(200).json(completeUserData);
+    } catch (e) {
+      next(e);
+    }
+  },
+);
 
 routes.post(
   '/signup',
@@ -34,7 +52,7 @@ routes.post(
         throw errors;
       }
 
-      const newUser:NewUserInterface = req.body;
+      const newUser: NewUserInterface = req.body;
       const authService = new AuthService();
       await authService.signUp(newUser);
 

@@ -1,7 +1,7 @@
 import bcrypt from 'bcrypt';
+import { Query } from 'pg';
 import DBClient from '../database/postgres';
-import { NewUserInterface } from '../interfaces';
-import User from '../interfaces/user.interface';
+import { NewUserInterface, UserInterface } from '../interfaces';
 import QueryBuilder from '../database/queries';
 
 export default class AuthService {
@@ -9,12 +9,33 @@ export default class AuthService {
 
   data: string;
 
-  usersDB:Array<User>;
-
   db: DBClient;
 
   constructor() {
     this.db = new DBClient();
+  }
+
+  async login(user: UserInterface) {
+    const { email, password } = user;
+
+    const userQuery = QueryBuilder.findUserByEmail(email);
+    const response = await this.db.execute(userQuery);
+    if (response.rowCount <= 0) {
+      throw new Error('User not found.');
+    }
+
+    const encryptedPassword = response.rows[0].password;
+    if (bcrypt.compareSync(password, encryptedPassword)) {
+      // If is true, it means the password is correct.
+      return {
+        firstName: response.rows[0].first_name,
+        lastName: response.rows[0].last_name,
+        id: response.rows[0].id,
+        email: response.rows[0].email,
+      };
+    }
+
+    throw new Error('Invalid password');
   }
 
   async signUp(user: NewUserInterface) {
@@ -22,6 +43,7 @@ export default class AuthService {
       email, password, firstName, lastName,
     } = user;
 
+    // Check for existing user.
     const userEmailQuery = QueryBuilder.findUserByEmail(email);
     const response = await this.db.execute(userEmailQuery);
     if (response.rowCount > 0) {
