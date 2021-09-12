@@ -22,7 +22,7 @@ class App {
     this.server.use(
       cors({ origin: process.env.WHITELIST_ORIGINS, optionsSuccessStatus: 200 }),
     );
-    this.server.use(App.validateToken);
+    this.server.all('*', App.validateToken);
     this.server.use('/api', authRoutes);
     this.server.use(authRoutes);
 
@@ -37,11 +37,13 @@ class App {
   ) {
     try {
       if (process.env.NODE_ENV !== 'local') {
-        const privateKey = process.env.JWT_KEY;
-        const token = req.headers.authorization;
-        jwt.verify(token, privateKey);
+        if (req.path !== '/login' && req.path !== '/signup') {
+          const privateKey = process.env.JWT_KEY;
+          const token = req.headers.authorization;
+          jwt.verify(token, privateKey);
 
-        return next();
+          return next();
+        }
       }
       return next();
     } catch (e) {
@@ -61,16 +63,28 @@ class App {
    * erro, ele precisa ter esses 4 parametros.
    */
   static errorHandler(
-    err: Error,
+    err: any,
     req: Request,
     res: Response,
     // eslint-disable-next-line no-unused-vars
     next: NextFunction,
   ) {
-    console.log(err.message);
-    console.log(err.stack);
+    if (err.message) {
+      console.log(err.message);
+    } else {
+      // In this case, it is a validation error thrown by the validator.
+      console.log(err);
+    }
 
-    return res.status(500).json(err.message);
+    if (err.stack) {
+      console.log(err.stack);
+    }
+
+    if (err.name === 'UserError') {
+      return res.status(400).json(err.message);
+    }
+
+    return res.status(500).json('An error occurred. Please try again.');
   }
 }
 
