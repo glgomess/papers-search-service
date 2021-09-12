@@ -2,6 +2,7 @@ import bcrypt from 'bcrypt';
 import DBClient from '../database/postgres';
 import { NewUserInterface, UserInterface } from '../interfaces';
 import QueryBuilder from '../database/queries';
+import UserError from '../errors/UserError';
 
 export default class AuthService {
   saltRounds = 10;
@@ -19,8 +20,9 @@ export default class AuthService {
 
     const userQuery = QueryBuilder.findUserByEmail(email);
     const response = await this.db.execute(userQuery);
+
     if (response.rowCount <= 0) {
-      throw new Error('User not found.');
+      throw new UserError('User not found.', 400);
     }
 
     const encryptedPassword = response.rows[0].password;
@@ -46,7 +48,7 @@ export default class AuthService {
     const userEmailQuery = QueryBuilder.findUserByEmail(email);
     const response = await this.db.execute(userEmailQuery);
     if (response.rowCount > 0) {
-      throw new Error('Email already in use.');
+      throw new UserError('Email already in use.', 400);
     }
 
     const hash = bcrypt.hashSync(password, this.saltRounds);
