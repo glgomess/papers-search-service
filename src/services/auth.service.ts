@@ -36,7 +36,7 @@ export default class AuthService {
       };
     }
 
-    throw new Error('Invalid password');
+    throw new UserError('Invalid email or password.', 400);
   }
 
   async signUp(user: NewUserInterface) {

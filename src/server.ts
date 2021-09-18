@@ -91,7 +91,7 @@ class App {
     }
 
     if (err.name === 'UserError') {
-      return res.status(400).json(err.message);
+      return res.status(err.status).json(err.message);
     }
 
     return res.status(500).json('An error occurred. Please try again.');
