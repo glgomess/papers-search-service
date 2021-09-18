@@ -2,6 +2,7 @@ import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
+import cookieParser from 'cookie-parser';
 import { authRoutes } from './routes/index';
 
 dotenv.config();
@@ -19,8 +20,13 @@ class App {
 
   private config() {
     this.server.use(express.json());
+    this.server.use(cookieParser());
     this.server.use(
-      cors({ origin: process.env.WHITELIST_ORIGINS, optionsSuccessStatus: 200 }),
+      cors({
+        origin: process.env.WHITELIST_ORIGINS,
+        optionsSuccessStatus: 200,
+        credentials: true,
+      }),
     );
     this.server.all('*', App.validateToken);
     this.server.use('/api', authRoutes);
@@ -37,12 +43,16 @@ class App {
   ) {
     try {
       if (process.env.NODE_ENV !== 'local') {
-        if (req.path !== '/login' && req.path !== '/signup') {
-          const privateKey = process.env.JWT_KEY;
-          const token = req.headers.authorization;
-          jwt.verify(token, privateKey);
+        if (!req.path.includes('/login') && !req.path.includes('/signup')) {
+          const token = req.cookies[`${process.env.COOKIE_NAME}`];
+          if (token) {
+            const privateKey = process.env.JWT_KEY;
+            jwt.verify(token, privateKey);
 
-          return next();
+            return next();
+          }
+
+          return res.status(403).json();
         }
       }
       return next();
