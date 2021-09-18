@@ -25,7 +25,8 @@ routes.post(
       const authService = new AuthService();
       const completeUserData = await authService.login(user);
 
-      res.cookie('hci-key', generateJWT(), { maxAge: 28800 });
+      res.cookie('hci-key', generateJWT(),
+        { maxAge: 28800, domain: process.env.HCI_FRONT_URL });
       return res.status(200).json(completeUserData);
     } catch (e) {
       next(e);
@@ -65,12 +66,15 @@ routes.post(
   },
 );
 
-// routes.post(
-//   '/recover',
-//   async (req: Request, res: Response, next: NextFunction) => {
-//     try {
-//     } catch (e) {}
-//   },
-// );
+routes.get(
+  '/teste',
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      return res.status(200).json('Success');
+    } catch (e) {
+      next(e);
+    }
+  },
+);
 
 export default routes;
