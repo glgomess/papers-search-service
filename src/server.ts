@@ -3,7 +3,9 @@ import cors from 'cors';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
+import swaggerUi from 'swagger-ui-express';
 import { authRoutes } from './routes/index';
+import swaggerDocs from './swagger.json';
 
 dotenv.config();
 
@@ -28,8 +30,9 @@ class App {
         credentials: true,
       }),
     );
+    this.server.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
     this.server.all('*', App.validateToken);
-    this.server.use('/api', authRoutes);
+    this.server.use('/api', authRoutes); // Mudfar p /auth
     this.server.use(authRoutes);
 
     // Error handler must be the last middleware.
@@ -43,7 +46,9 @@ class App {
   ) {
     try {
       if (process.env.NODE_ENV !== 'local') {
-        if (!req.path.includes('/login') && !req.path.includes('/signup')) {
+        if (!req.path.includes('/login')
+        && !req.path.includes('/signup')
+        && !req.path.includes('/api-docs')) {
           const token = req.cookies[`${process.env.COOKIE_NAME}`];
           if (token) {
             const privateKey = process.env.JWT_KEY;
