@@ -16,8 +16,9 @@ class App {
     this.server = express();
     this.config();
 
-    this.server.listen(process.env.PORT);
-    console.log(`HCI Service on Port ${process.env.PORT}`);
+    const port = process.env.PORT ? process.env.PORT : 3001;
+    this.server.listen(port);
+    console.log(`HCI Service on Port ${port}`);
   }
 
   private config() {
