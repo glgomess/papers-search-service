@@ -1,0 +1,132 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "HCI Papers Search API",
+    "description": "This API was built to search articles.",
+    "contact": {
+      "email": "lacerdagomes95@gmail.com"
+    },
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3001",
+      "description": "Local test environment"
+    }
+  ],
+  "paths": {
+    "/login": {
+      "post": {
+        "summary": "User login.",
+        "description": "Route responsible for validating credentials and generating JWT.",
+        "tags": ["User"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PartialUser"
+              },
+              "examples": {
+                "user": {
+                  "value": {
+                    "email": "user@email.com",
+                    "password": "password123"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "400": {
+            "description": "Invalid user credentials."
+          },
+          "500": {
+            "description": "Error while processing data."
+          },
+          "200": {
+            "description": "User found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/signup": {
+      "post": {
+        "summary": "User signup.",
+        "description": "Route responsible for creating new user.",
+        "tags": ["User"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserWPassword"
+              },
+              "examples": {
+                "user": {
+                  "value": {
+                    "email": "user@email.com",
+                    "password": "password123",
+                    "firstName": "User",
+                    "lastName": "Name"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "400": {
+            "description": "Invalid user credentials."
+          },
+          "500": {
+            "description": "Error while processing data."
+          },
+          "200": {
+            "description": "Success."
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "PartialUser": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        }
+      },
+      "User": {
+        "type":"object",
+        "properties": {
+          "email": {"type":"string"},
+          "firstName": {"type":"string"},
+          "lastName": {"type":"string"},
+          "id": {"type":"integer"}
+        }
+      },
+      "UserWPassword": {
+        "type":"object",
+        "properties": {
+          "email": {"type":"string"},
+          "firstName": {"type":"string"},
+          "lastName": {"type":"string"},
+          "password": {"type":"string"},
+          "id": {"type":"integer"}
+        }
+      }
+    }
+  }
+}
