@@ -2,7 +2,7 @@ import { Client } from '@elastic/elasticsearch';
 import csv from 'csv-parser';
 import fs from 'fs';
 
-class ElasticCluster {
+export default class ElasticCluster {
   client: Client;
 
   constructor() {
@@ -104,5 +104,3 @@ class ElasticCluster {
       });
   };
 }
-
-export default new ElasticCluster();
