@@ -66,15 +66,4 @@ routes.post(
   },
 );
 
-routes.get(
-  '/teste',
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      return res.status(200).json('Success');
-    } catch (e) {
-      next(e);
-    }
-  },
-);
-
 export default routes;
