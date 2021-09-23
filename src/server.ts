@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import swaggerUi from 'swagger-ui-express';
-import { authRoutes } from './routes/index';
+import { authRoutes, elasticRoutes } from './routes/index';
 import swaggerDocs from './swagger.json';
 
 dotenv.config();
@@ -15,7 +15,6 @@ class App {
   public constructor() {
     this.server = express();
     this.config();
-
     const port = process.env.PORT ? process.env.PORT : 3001;
     this.server.listen(port);
     console.log(`HCI Service on Port ${port}`);
@@ -33,8 +32,11 @@ class App {
     );
     this.server.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
     this.server.all('*', App.validateToken);
-    this.server.use('/api', authRoutes); // Mudfar p /auth
+    this.server.use('/api', authRoutes, elasticRoutes);
+    this.server.use('/auth', authRoutes);
+    this.server.use('/elastic', elasticRoutes);
     this.server.use(authRoutes);
+    this.server.use(elasticRoutes);
 
     // Error handler must be the last middleware.
     this.server.use(App.errorHandler);
