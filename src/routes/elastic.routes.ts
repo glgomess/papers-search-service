@@ -4,12 +4,12 @@ import ElasticCluster from '../elasticsearch/elastic';
 const routes = express.Router();
 
 routes.get(
-  '/search',
+  '/search/keywords',
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { kw } = req.body;
       const elasticCluster = new ElasticCluster();
-      const matches = elasticCluster.getAutocompleteData('articles', kw);
+      const matches = await elasticCluster.getAutocompleteData('articles', kw);
 
       return res.status(200).json(matches);
     } catch (e) {
@@ -19,15 +19,20 @@ routes.get(
 );
 
 routes.post(
-  '/instatiate',
+  '/setup',
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const elasticCluster = new ElasticCluster();
-      await elasticCluster.createIndex('article');
-      await elasticCluster.migrateFileDBToElasticIndex();
-      await elasticCluster.createMapping('index');
+      // Create indices.
+      await elasticCluster.createArticleIndex();
 
-      return res.status(200).json();
+      // Create mappings.
+      await elasticCluster.createArticleIndexMapping();
+
+      // Migrate data.
+      await elasticCluster.migrateFileDBToElasticIndex();
+
+      return res.status(200).json('All indices were successfully created.');
     } catch (e) {
       next(e);
     }
