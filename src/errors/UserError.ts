@@ -1,18 +1,18 @@
-export default class UserError extends Error {
-  status: number;
+import { CommonErrorDataInterface } from '../interfaces';
 
-  name: string;
+export default class UserError extends Error implements CommonErrorDataInterface {
+  statusCode: number;
 
-  message: string;
+  originalMessage: string;
 
   stack: string;
 
-  constructor(message: string, status: number) {
+  constructor(message:string, statusCode:number, originalMessage:string, stack: string) {
     super(message);
-    // Error.captureStackTrace(this, this.constructor);
-    this.stack = (new Error()).stack;
 
-    this.name = 'UserError';
-    this.status = status;
+    this.statusCode = statusCode;
+    this.originalMessage = originalMessage;
+    this.stack = stack;
+    Object.setPrototypeOf(this, UserError.prototype);
   }
 }

@@ -1,4 +1,6 @@
-export default class ElasticError extends Error {
+import { CommonErrorDataInterface } from '../interfaces';
+
+export default class ElasticError extends Error implements CommonErrorDataInterface {
   statusCode: number;
 
   originalMessage: string;
