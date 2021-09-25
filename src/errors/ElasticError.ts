@@ -1,6 +1,6 @@
-import { CommonErrorDataInterface } from '../interfaces';
+import CustomError from './CustomError';
 
-export default class ElasticError extends Error implements CommonErrorDataInterface {
+export default class ElasticError extends CustomError {
   statusCode: number;
 
   originalMessage: string;
