@@ -1,6 +1,6 @@
 import { CommonErrorDataInterface } from '../interfaces';
 
-export default class UserError extends Error implements CommonErrorDataInterface {
+export default class ElasticError extends Error implements CommonErrorDataInterface {
   statusCode: number;
 
   originalMessage: string;
@@ -13,6 +13,10 @@ export default class UserError extends Error implements CommonErrorDataInterface
     this.statusCode = statusCode;
     this.originalMessage = originalMessage;
     this.stack = stack;
-    Object.setPrototypeOf(this, UserError.prototype);
+    Object.setPrototypeOf(this, ElasticError.prototype);
+  }
+
+  serializeMessage() {
+    return this.originalMessage;
   }
 }

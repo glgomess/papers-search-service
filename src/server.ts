@@ -6,6 +6,7 @@ import cookieParser from 'cookie-parser';
 import swaggerUi from 'swagger-ui-express';
 import { authRoutes, elasticRoutes } from './routes/index';
 import swaggerDocs from './swagger.json';
+import ElasticError from './errors/ElasticError';
 
 dotenv.config();
 
@@ -32,9 +33,8 @@ class App {
     );
     this.server.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
     this.server.all('*', App.validateToken);
-    this.server.use('/api', authRoutes, elasticRoutes);
-    this.server.use('/auth', authRoutes);
-    this.server.use('/elastic', elasticRoutes);
+    this.server.use('/api/auth', authRoutes);
+    this.server.use('/api/elastic', elasticRoutes);
     this.server.use(authRoutes);
     this.server.use(elasticRoutes);
 
@@ -81,25 +81,15 @@ class App {
    * erro, ele precisa ter esses 4 parametros.
    */
   static errorHandler(
-    err: any,
+    err: Error,
     req: Request,
     res: Response,
     // eslint-disable-next-line no-unused-vars
     next: NextFunction,
   ) {
-    if (err.message) {
-      console.log(err.message);
-    } else {
-      // In this case, it is a validation error thrown by the validator.
-      console.log(err);
-    }
-
-    if (err.stack) {
+    if (err instanceof ElasticError) {
       console.log(err.stack);
-    }
-
-    if (err.name === 'UserError') {
-      return res.status(err.status).json(err.message);
+      return res.status(err.statusCode).json(err.message);
     }
 
     return res.status(500).json('An error occurred. Please try again.');

@@ -22,7 +22,7 @@ export default class AuthService {
     const response = await this.db.execute(userQuery);
 
     if (response.rowCount <= 0) {
-      throw new UserError('User not found.', 400);
+      throw new UserError('User not found.', 400, '', '');
     }
 
     const encryptedPassword = response.rows[0].password;
@@ -36,7 +36,7 @@ export default class AuthService {
       };
     }
 
-    throw new UserError('Invalid email or password.', 400);
+    throw new UserError('Invalid email or password.', 400, '', '');
   }
 
   async signUp(user: NewUserInterface) {
@@ -48,7 +48,7 @@ export default class AuthService {
     const userEmailQuery = QueryBuilder.findUserByEmail(email);
     const response = await this.db.execute(userEmailQuery);
     if (response.rowCount > 0) {
-      throw new UserError('Email already in use.', 400);
+      throw new UserError('Email already in use.', 400, '', '');
     }
 
     const hash = bcrypt.hashSync(password, this.saltRounds);
