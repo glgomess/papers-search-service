@@ -1,5 +1,5 @@
 import express, { Response, Request, NextFunction } from 'express';
-import ElasticCluster from '../elasticsearch/elastic';
+import { ElasticService } from '../services';
 
 const routes = express.Router();
 
@@ -7,10 +7,10 @@ routes.get(
   '/search/keywords',
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { kw } = req.body;
-      const elasticCluster = new ElasticCluster();
-      const matches = await elasticCluster.getAutocompleteData('articles', kw);
-
+      const kw = String(req.query.kw);
+      const elasticService = new ElasticService();
+      // eslint-disable-next-line max-len
+      const matches = await elasticService.getAutocompleteData(ElasticService.searchData.articles, kw);
       return res.status(200).json(matches);
     } catch (e) {
       next(e);
@@ -22,15 +22,15 @@ routes.post(
   '/setup',
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const elasticCluster = new ElasticCluster();
+      const elasticService = new ElasticService();
       // Create indices.
-      await elasticCluster.createArticleIndex();
+      await elasticService.createArticleIndex();
 
       // Create mappings.
-      await elasticCluster.createArticleIndexMapping();
+      await elasticService.createArticleIndexMapping();
 
       // Migrate data.
-      await elasticCluster.migrateFileDBToElasticIndex();
+      await elasticService.migrateFileDBToElasticIndex();
 
       return res.status(200).json('All indices were successfully created.');
     } catch (e) {
@@ -43,8 +43,8 @@ routes.delete(
   '/',
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const elasticCluster = new ElasticCluster();
-      await elasticCluster.deleteIndices('articles');
+      const elasticService = new ElasticService();
+      await elasticService.deleteIndices('articles');
 
       return res.status(200).json();
     } catch (e) {
