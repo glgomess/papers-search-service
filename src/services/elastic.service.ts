@@ -1,11 +1,15 @@
 import { Client } from '@elastic/elasticsearch';
+import { ElasticsearchClientError } from '@elastic/elasticsearch/lib/errors';
 import csv from 'csv-parser';
 import fs from 'fs';
-import { ElasticsearchClientError } from '@elastic/elasticsearch/lib/errors';
 import ElasticError from '../errors/ElasticError';
 
-export default class ElasticCluster {
+export default class ElasticService {
   client: Client;
+
+  static searchData = {
+    articles: 'articles',
+  };
 
   indices = {
     articles: '',
@@ -17,7 +21,9 @@ export default class ElasticCluster {
 
   constructor() {
     // Very simple local cluster for development and testing.
-    this.client = new Client({ node: process.env.ELASTIC_CLUSTER_URL });
+    if (!this.client) {
+      this.client = new Client({ node: process.env.ELASTIC_CLUSTER_URL });
+    }
     this.indices = {
       articles: 'articles',
     };
@@ -99,13 +105,20 @@ export default class ElasticCluster {
         index,
         body: {
           query: {
-            match: { keyword_equivalent: { query: keyword, analyzer: 'standard' } },
+            match: { keyword_equivalent: { query: keyword, analyzer: 'autocomplete' } },
           },
         },
       });
 
-      return body.hits.hits;
+      const foundResults = body.hits.hits;
+      const formattedResults = [];
+      for (let i = 0; i < foundResults.length; i += 1) {
+        formattedResults.push(foundResults[i]._source.keyword_equivalent);
+      }
+
+      return formattedResults;
     } catch (e) {
+      console.log(e);
       if (e instanceof ElasticsearchClientError) {
         throw new ElasticError('An error occurred while fetching the keywords.',
           500,
