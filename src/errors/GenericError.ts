@@ -1,6 +1,6 @@
 import CustomError from './CustomError';
 
-export default class ElasticError extends CustomError {
+export default class GenericError extends CustomError {
   statusCode: number;
 
   originalMessage: string;
@@ -24,10 +24,6 @@ export default class ElasticError extends CustomError {
     if (payload) {
       this.payload = payload;
     }
-    Object.setPrototypeOf(this, ElasticError.prototype);
-  }
-
-  serializeMessage() {
-    return this.originalMessage;
+    Object.setPrototypeOf(this, GenericError.prototype);
   }
 }
