@@ -88,7 +88,7 @@ export default class ElasticService {
         },
       });
     } catch (e) {
-      throw new ElasticError('Elastic could not create Articles index.', 500, e.message, e.stack);
+      throw new ElasticError('Elastic could not create Articles index.', 500, e.message);
     }
   }
 
@@ -112,7 +112,7 @@ export default class ElasticService {
         },
       });
     } catch (e) {
-      throw new ElasticError('Elastic could not create Articles mapping.', 500, e.message, e.stack);
+      throw new ElasticError('Elastic could not create Articles mapping.', 500, e.message);
     }
   }
 
@@ -120,7 +120,7 @@ export default class ElasticService {
     try {
       await this.client.indices.delete({ index: indexName });
     } catch (e) {
-      throw new ElasticError(`Elastic could not delete ${indexName} index.`, 500, e.message, e.stack);
+      throw new ElasticError(`Elastic could not delete ${indexName} index.`, 500, e.message);
     }
   }
 
@@ -133,7 +133,7 @@ export default class ElasticService {
 
       await this.client.indices.refresh({ index });
     } catch (e) {
-      throw new ElasticError(`Elastic could not insert data into ${index}.`, 500, e.message, e.stack, body);
+      throw new ElasticError(`Elastic could not insert data into ${index}.`, 500, e.message, body);
     }
   }
 
@@ -159,7 +159,6 @@ export default class ElasticService {
       throw new ElasticError('An error occurred while finding suggestions for your search.',
         500,
         e.message,
-        e.stack,
         `Keyword Searched: ${keyword}`);
     }
   }
