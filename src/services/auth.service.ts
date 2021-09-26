@@ -2,7 +2,7 @@ import bcrypt from 'bcrypt';
 import DBClient from '../database/postgres';
 import { NewUserInterface, UserInterface } from '../interfaces';
 import QueryBuilder from '../database/queries';
-import UserError from '../errors/UserError';
+import { UserError } from '../errors';
 
 export default class AuthService {
   saltRounds = 10;
