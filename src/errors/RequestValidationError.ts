@@ -1,6 +1,6 @@
-import CustomError from './CustomError';
+import { CustomError } from './index';
 
-export default class ElasticError extends CustomError {
+export default class RequestValidationError extends CustomError {
   statusCode: number;
 
   originalMessage: string;
@@ -21,10 +21,6 @@ export default class ElasticError extends CustomError {
       this.payload = payload;
     }
 
-    Object.setPrototypeOf(this, ElasticError.prototype);
-  }
-
-  serializeMessage() {
-    return this.originalMessage;
+    Object.setPrototypeOf(this, RequestValidationError.prototype);
   }
 }

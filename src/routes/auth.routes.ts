@@ -1,5 +1,6 @@
 import express, { Response, Request, NextFunction } from 'express';
 import { body, validationResult } from 'express-validator';
+import RequestValidationError from '../errors/RequestValidationError';
 import { NewUserInterface, UserInterface } from '../interfaces';
 import AuthService from '../services/auth.service';
 import generateJWT from '../utils/jwt-generator';
@@ -18,7 +19,7 @@ routes.post(
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
-        throw errors;
+        throw new RequestValidationError('Invalid data sent on HTTP request.', 400, '', errors);
       }
 
       const user: UserInterface = req.body;
@@ -52,7 +53,7 @@ routes.post(
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
-        throw errors;
+        throw new RequestValidationError('Invalid data sent on HTTP request.', 400, '', errors);
       }
 
       const newUser: NewUserInterface = req.body;

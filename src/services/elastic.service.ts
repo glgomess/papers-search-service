@@ -1,8 +1,19 @@
 import { Client } from '@elastic/elasticsearch';
-import { ElasticsearchClientError } from '@elastic/elasticsearch/lib/errors';
+import {
+  ElasticsearchClientError,
+  ProductNotSupportedError,
+  SerializationError,
+  DeserializationError,
+  ConfigurationError,
+  ResponseError,
+  RequestAbortedError,
+  NoLivingConnectionsError,
+  ConnectionError,
+  TimeoutError,
+} from '@elastic/elasticsearch/lib/errors';
 import csv from 'csv-parser';
 import fs from 'fs';
-import ElasticError from '../errors/ElasticError';
+import { ElasticError } from '../errors';
 
 export default class ElasticService {
   client: Client;
@@ -21,13 +32,30 @@ export default class ElasticService {
 
   constructor() {
     // Very simple local cluster for development and testing.
+    // Possibly on production mode the connection will requires more parameters.
     if (!this.client) {
       this.client = new Client({ node: process.env.ELASTIC_CLUSTER_URL });
     }
     this.indices = {
       articles: 'articles',
     };
-    this.exceptions.existingResource = 'resource_already_exists_exception';
+  }
+
+  static checkIfIsElasticError(error) {
+    if (error instanceof ProductNotSupportedError
+      || error instanceof SerializationError
+      || error instanceof ElasticsearchClientError
+      || error instanceof DeserializationError
+      || error instanceof ConfigurationError
+      || error instanceof ResponseError
+      || error instanceof RequestAbortedError
+      || error instanceof NoLivingConnectionsError
+      || error instanceof ConnectionError
+      || error instanceof TimeoutError) {
+      return true;
+    }
+
+    return false;
   }
 
   async createArticleIndex() {
@@ -60,43 +88,53 @@ export default class ElasticService {
         },
       });
     } catch (e) {
-      if (e.message.includes(this.exceptions.existingResource)) {
-        console.log(`Error creating INDEX ${this.indices.articles} - Index already exists.`);
-      }
+      throw new ElasticError('Elastic could not create Articles index.', 500, e.message);
     }
   }
 
   async createArticleIndexMapping() {
-    await this.client.indices.putMapping({
-      index: this.indices.articles,
-      include_type_name: true,
-      type: 'keyword',
-      body: {
-        properties: {
-          keyword_equivalent: {
-            type: 'text',
-            analyzer: 'autocomplete',
-            search_analyzer: 'standard',
-          },
-          parent_topic: {
-            type: 'text',
+    try {
+      await this.client.indices.putMapping({
+        index: this.indices.articles,
+        include_type_name: true,
+        type: 'keyword',
+        body: {
+          properties: {
+            keyword_equivalent: {
+              type: 'text',
+              analyzer: 'autocomplete',
+              search_analyzer: 'standard',
+            },
+            parent_topic: {
+              type: 'text',
+            },
           },
         },
-      },
-    });
+      });
+    } catch (e) {
+      throw new ElasticError('Elastic could not create Articles mapping.', 500, e.message);
+    }
   }
 
   async deleteIndices(indexName: string) {
-    await this.client.indices.delete({ index: indexName });
+    try {
+      await this.client.indices.delete({ index: indexName });
+    } catch (e) {
+      throw new ElasticError(`Elastic could not delete ${indexName} index.`, 500, e.message);
+    }
   }
 
   async insertDataIntoIndex(body: object, index: string) {
-    await this.client.index({
-      index,
-      body,
-    });
+    try {
+      await this.client.index({
+        index,
+        body,
+      });
 
-    await this.client.indices.refresh({ index: 'articles' });
+      await this.client.indices.refresh({ index });
+    } catch (e) {
+      throw new ElasticError(`Elastic could not insert data into ${index}.`, 500, e.message, body);
+    }
   }
 
   async getAutocompleteData(index: string, keyword: string) {
@@ -118,13 +156,10 @@ export default class ElasticService {
 
       return formattedResults;
     } catch (e) {
-      console.log(e);
-      if (e instanceof ElasticsearchClientError) {
-        throw new ElasticError('An error occurred while fetching the keywords.',
-          500,
-          e.message,
-          e.stack);
-      }
+      throw new ElasticError('An error occurred while finding suggestions for your search.',
+        500,
+        e.message,
+        `Keyword Searched: ${keyword}`);
     }
   }
 
