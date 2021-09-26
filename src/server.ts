@@ -6,7 +6,7 @@ import cookieParser from 'cookie-parser';
 import swaggerUi from 'swagger-ui-express';
 import { authRoutes, elasticRoutes } from './routes/index';
 import swaggerDocs from './swagger.json';
-import ElasticError from './errors/ElasticError';
+import { CustomError } from './errors';
 
 dotenv.config();
 
@@ -87,11 +87,17 @@ class App {
     // eslint-disable-next-line no-unused-vars
     next: NextFunction,
   ) {
-    if (err instanceof ElasticError) {
+    if (err instanceof CustomError) {
+      console.log(err.originalMessage);
       console.log(err.stack);
+      if (err.payload) {
+        console.log(err.payload);
+      }
       return res.status(err.statusCode).json(err.message);
     }
 
+    console.log(err.message);
+    console.log(err.stack);
     return res.status(500).json('An error occurred. Please try again.');
   }
 }
