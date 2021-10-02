@@ -7,6 +7,8 @@ import swaggerUi from 'swagger-ui-express';
 import { authRoutes, elasticRoutes } from './routes/index';
 import swaggerDocs from './swagger.json';
 import { CustomError } from './errors';
+import logger from './utils/winston';
+import morgan from './utils/morgan';
 
 dotenv.config();
 
@@ -22,6 +24,7 @@ class App {
   }
 
   private config() {
+    this.server.use(morgan);
     this.server.use(express.json());
     this.server.use(cookieParser());
     this.server.use(
@@ -88,16 +91,18 @@ class App {
     next: NextFunction,
   ) {
     if (err instanceof CustomError) {
-      console.log(err.originalMessage);
-      console.log(err.stack);
+      logger('Stack').error(err.stack);
+      if (err.originalMessage) {
+        logger('OriginalMessage').notice(err.originalMessage);
+      }
       if (err.payload) {
-        console.log(err.payload);
+        logger('Payload').notice(JSON.stringify(err.payload));
       }
       return res.status(err.statusCode).json(err.message);
     }
 
-    console.log(err.message);
-    console.log(err.stack);
+    logger('ErrorHandler').error(err.message);
+    logger('ErrorHandler').error(err.stack);
     return res.status(500).json('An error occurred. Please try again.');
   }
 }
