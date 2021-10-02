@@ -15,7 +15,7 @@
     }
   ],
   "paths": {
-    "/login": {
+    "/api/auth/login": {
       "post": {
         "summary": "User login.",
         "description": "Route responsible for validating credentials and generating JWT.",
@@ -39,10 +39,22 @@
         },
         "responses": {
           "400": {
-            "description": "Invalid user credentials."
+            "description": "Invalid user credentials.",
+            "content": { 
+              "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ServerError"
+              }
+            }}
           },
           "500": {
-            "description": "Error while processing data."
+            "description": "Error while processing data.",
+            "content": { 
+              "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ServerError"
+              }
+            }}
           },
           "200": {
             "description": "User found.",
@@ -57,7 +69,7 @@
         }
       }
     },
-    "/signup": {
+    "/api/auth/signup": {
       "post": {
         "summary": "User signup.",
         "description": "Route responsible for creating new user.",
@@ -83,10 +95,124 @@
         },
         "responses": {
           "400": {
-            "description": "Invalid user credentials."
+            "description": "Invalid user credentials.",
+            "content": { 
+              "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ServerError"
+              }
+            }}
           },
           "500": {
-            "description": "Error while processing data."
+            "description": "Error while processing data.",
+            "content": { 
+              "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ServerError"
+              }
+            }}
+          },
+          "200": {
+            "description": "Success."
+          }
+        }
+      }
+    },
+    "/api/elastic/search/keywords": {
+      "get": {
+        "summary": "Keywords search.",
+        "description": "Route responsible for searching keywords.",
+        "tags": ["Elastic"],
+        "parameters": [{
+          "in": "query",
+          "name": "kw",
+          "description": "Word to search for.",
+          "required": true
+        }],
+        "responses": {
+          "403": {
+            "description": "Invalid token.",
+            "content": { 
+              "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ServerError"
+              }
+            }}
+          },
+          "500": {
+            "description": "Error while searching for suggestions.",
+            "content": { 
+              "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ServerError"
+              }
+            }}
+          },
+          "200": {
+            "description": "Success.",
+            "content": { 
+              "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FoundKeywords"
+              }
+            }}
+          }
+        }
+      }
+    },
+    "/api/elastic/setup": {
+      "post": {
+        "summary": "Initial cluster configuration.",
+        "description": "Route responsible for configuring mapping, indexes and cloning DB's.",
+        "tags": ["Elastic"],
+        "responses": {
+          "403": {
+            "description": "Invalid token.",
+            "content": { 
+              "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ServerError"
+              }
+            }}
+          },
+          "500": {
+            "description": "Error while searching for suggestions.",
+            "content": { 
+              "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ServerError"
+              }
+            }}
+          },
+          "200": {
+            "description": "Success."
+          }
+        }
+      }
+    },
+    "/api/elastic/": {
+      "delete": {
+        "summary": "Deletes all indexes.",
+        "description": "Route responsible for deleting all data from cluster. SHould only be used on Elastic locally.",
+        "tags": ["Elastic"],
+        "responses": {
+          "403": {
+            "description": "Invalid token.",
+            "content": { 
+              "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ServerError"
+              }
+            }}
+          },
+          "500": {
+            "description": "Error while searching for suggestions.",
+            "content": { 
+              "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ServerError"
+              }
+            }}
           },
           "200": {
             "description": "Success."
@@ -117,6 +243,23 @@
           "id": {"type":"integer"}
         }
       },
+      "FoundKeywords": {
+        "type":"array",
+        "items": {
+          "type": "string",
+          "example": [
+            "augmentative and alternative communication",
+            "alternative and augmentative communication",
+            "augmented communication",
+            "augmented cognition",
+            "augmented learning",
+            "augmented reality",
+            "mobile augmented reality",
+            "tangible augmented reality",
+            "automated annotation"
+          ]
+        }
+      },
       "UserWPassword": {
         "type":"object",
         "properties": {
@@ -126,6 +269,9 @@
           "password": {"type":"string"},
           "id": {"type":"integer"}
         }
+      },
+      "ServerError": {
+        "type": "string"
       }
     }
   }

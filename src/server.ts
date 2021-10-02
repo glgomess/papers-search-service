@@ -57,7 +57,7 @@ class App {
     next: NextFunction,
   ) {
     try {
-      if (process.env.NODE_ENV !== 'locals') {
+      if (process.env.NODE_ENV !== 'local') {
         if (!req.path.includes('/login')
         && !req.path.includes('/signup')
         && !req.path.includes('/api-docs')) {

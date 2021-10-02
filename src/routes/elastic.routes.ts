@@ -34,7 +34,7 @@ routes.post(
       await elasticService.migrateFileDBToElasticIndex();
 
       logger('Elastic').info('Articles Index created and data migrated.');
-      return res.status(200).json('All indices were successfully created.');
+      return res.status(200).json();
     } catch (e) {
       next(e);
     }
