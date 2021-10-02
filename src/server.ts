@@ -20,7 +20,7 @@ class App {
     this.config();
     const port = process.env.PORT ? process.env.PORT : 3001;
     this.server.listen(port);
-    console.log(`HCI Service on Port ${port}`);
+    logger('Server').info(`HCI Service on Port ${port}`);
   }
 
   private config() {
@@ -51,7 +51,7 @@ class App {
     next: NextFunction,
   ) {
     try {
-      if (process.env.NODE_ENV !== 'local') {
+      if (process.env.NODE_ENV !== 'locals') {
         if (!req.path.includes('/login')
         && !req.path.includes('/signup')
         && !req.path.includes('/api-docs')) {
@@ -63,13 +63,13 @@ class App {
             return next();
           }
 
-          return res.status(403).json();
+          return res.status(403).json('JWT not present.');
         }
       }
       return next();
     } catch (e) {
-      console.error(e);
-      return res.status(403).json();
+      logger('TokenValidation').error(e);
+      return res.status(403).json('Error while validating token.');
     }
   }
 
