@@ -3,7 +3,7 @@ import morgan from 'morgan';
 // Custom token to convert date to GMT-3.
 morgan.token('date', () => {
   const p = new Date().toString().replace(/[A-Z]{3}\+/, '+').split(/ /);
-  return (`${p[2]}/${p[1]}/${p[3]}:${p[4]} ${p[5]}`);
+  return (`${p[2]}/${p[1]}/${p[3]} ${p[4]}`);
 });
 
 /**
