@@ -27,6 +27,12 @@ class App {
     this.server.use(morgan);
     this.server.use(express.json());
     this.server.use(cookieParser());
+
+    /**
+     * For now, the onlyu allowed origin is the frontend, but to
+     * enable new ones, a logic will probably be needed to split the
+     * array of origins from the .env variable.
+     */
     this.server.use(
       cors({
         origin: process.env.WHITELIST_ORIGINS,
