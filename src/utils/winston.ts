@@ -20,9 +20,9 @@ const logFormat = printf(({
   level, message, label, timestamp,
 }) => `${timestamp} [${label}] ${level}: ${message}`);
 
-const logger = (details?: string) => winston.createLogger({
+const logger = (details: string) => winston.createLogger({
   format: combine(
-    details ? label({ label: `${details}` }) : null,
+    label({ label: `${details}` }),
     timestamp({ format: 'DD/MM/YYYY HH:mm:ss' }),
     winston.format.colorize(),
     logFormat,
