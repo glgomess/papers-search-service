@@ -7,6 +7,8 @@ import swaggerUi from 'swagger-ui-express';
 import { authRoutes, elasticRoutes } from './routes/index';
 import swaggerDocs from './swagger.json';
 import { CustomError } from './errors';
+import logger from './utils/winston';
+import morgan from './utils/morgan';
 
 dotenv.config();
 
@@ -18,10 +20,11 @@ class App {
     this.config();
     const port = process.env.PORT ? process.env.PORT : 3001;
     this.server.listen(port);
-    console.log(`HCI Service on Port ${port}`);
+    logger('Server').info(`HCI Service on Port ${port}`);
   }
 
   private config() {
+    this.server.use(morgan);
     this.server.use(express.json());
     this.server.use(cookieParser());
     this.server.use(
@@ -48,7 +51,7 @@ class App {
     next: NextFunction,
   ) {
     try {
-      if (process.env.NODE_ENV !== 'local') {
+      if (process.env.NODE_ENV !== 'locals') {
         if (!req.path.includes('/login')
         && !req.path.includes('/signup')
         && !req.path.includes('/api-docs')) {
@@ -60,13 +63,13 @@ class App {
             return next();
           }
 
-          return res.status(403).json();
+          return res.status(403).json('JWT not present.');
         }
       }
       return next();
     } catch (e) {
-      console.error(e);
-      return res.status(403).json();
+      logger('TokenValidation').error(e);
+      return res.status(403).json('Error while validating token.');
     }
   }
 
@@ -88,16 +91,18 @@ class App {
     next: NextFunction,
   ) {
     if (err instanceof CustomError) {
-      console.log(err.originalMessage);
-      console.log(err.stack);
+      logger('Stack').error(err.stack);
+      if (err.originalMessage) {
+        logger('OriginalMessage').notice(err.originalMessage);
+      }
       if (err.payload) {
-        console.log(err.payload);
+        logger('Payload').notice(JSON.stringify(err.payload));
       }
       return res.status(err.statusCode).json(err.message);
     }
 
-    console.log(err.message);
-    console.log(err.stack);
+    logger('ErrorHandler').error(err.message);
+    logger('ErrorHandler').error(err.stack);
     return res.status(500).json('An error occurred. Please try again.');
   }
 }

@@ -34,7 +34,6 @@
      "semi": "off",
     "@typescript-eslint/semi": "error",
     "consistent-return": "off",
-    "no-console":"off",
     "no-unused-vars":"warn",
     "linebreak-style":"off",
     "no-underscore-dangle":"off"

@@ -1,5 +1,6 @@
 import express, { Response, Request, NextFunction } from 'express';
 import { ElasticService } from '../services';
+import logger from '../utils/winston';
 
 const routes = express.Router();
 
@@ -32,6 +33,7 @@ routes.post(
       // Migrate data.
       await elasticService.migrateFileDBToElasticIndex();
 
+      logger('Elastic').info('Articles Index created and data migrated.');
       return res.status(200).json('All indices were successfully created.');
     } catch (e) {
       next(e);
@@ -46,6 +48,7 @@ routes.delete(
       const elasticService = new ElasticService();
       await elasticService.deleteIndices('articles');
 
+      logger('Elastic').info('Articles Index deleted.');
       return res.status(200).json();
     } catch (e) {
       next(e);
