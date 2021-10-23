@@ -13,7 +13,7 @@ morgan.token('date', () => {
 const morganMiddleware = morgan(
   '[:date] :method :url :status', {
     skip(req) {
-      return req.url.includes('/elastic');
+      return req.url.includes('/keywords');
     },
   },
 );
