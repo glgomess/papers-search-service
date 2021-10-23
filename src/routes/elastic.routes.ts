@@ -19,6 +19,23 @@ routes.get(
   },
 );
 
+routes.get(
+  '/search/articles',
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const kw = String(req.query.keywords);
+      const elasticService = new ElasticService();
+      const matches = await elasticService.getArticlesByKeywords(
+        ElasticService.searchData.articles, kw,
+      );
+
+      return res.status(200).json(matches);
+    } catch (e) {
+      next(e);
+    }
+  },
+);
+
 routes.post(
   '/setup',
   async (req: Request, res: Response, next: NextFunction) => {
@@ -31,7 +48,8 @@ routes.post(
       await elasticService.createArticleIndexMapping();
 
       // Migrate data.
-      await elasticService.migrateFileDBToElasticIndex();
+      await elasticService.migrateArticlesFileDBToElasticIndex();
+      await elasticService.migrateKeywordsFileDBToElasticIndex();
 
       logger('Elastic').info('Articles Index created and data migrated.');
       return res.status(200).json();
