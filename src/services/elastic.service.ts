@@ -14,6 +14,8 @@ import {
 import csv from 'csv-parser';
 import fs from 'fs';
 import { ElasticError } from '../errors';
+import { Article } from '../models';
+import logger from '../utils/winston';
 
 export default class ElasticService {
   client: Client;
@@ -143,7 +145,7 @@ export default class ElasticService {
         index,
         body: {
           query: {
-            match: { keyword_equivalent: { query: keyword, analyzer: 'autocomplete' } },
+            match_phrase: { keyword_equivalent: { query: keyword, analyzer: 'autocomplete' } },
           },
         },
       });
@@ -163,15 +165,53 @@ export default class ElasticService {
     }
   }
 
-  migrateFileDBToElasticIndex = async () => {
+  async getArticlesByKeywords(index: string, keywords: string) {
+    const { body } = await this.client.search({
+      index,
+      body: {
+        query: {
+          match_phrase: { keywords },
+        },
+      },
+    });
+
+    const foundResults = body.hits.hits;
+    const formattedResults = [];
+
+    for (let i = 0; i < foundResults.length; i += 1) {
+      formattedResults.push(new Article(foundResults[i]._source));
+    }
+
+    return formattedResults;
+  }
+
+  migrateArticlesFileDBToElasticIndex = async () => {
+    const articlesFilePath = process.env.ARTICLES_DB_FILE_PATH;
+    const currentData = [];
+
+    fs.createReadStream(articlesFilePath)
+      .pipe(csv())
+      .on('data', (data) => currentData.push(data))
+      .on('end', async () => {
+        logger('Articles DB Migration').info(`Migrating ${currentData.length} entries.`);
+        for (let i = 0; i < currentData.length; i += 1) {
+          // eslint-disable-next-line no-await-in-loop
+          await this.insertDataIntoIndex(currentData[i], this.indices.articles);
+        }
+      });
+  };
+
+  migrateKeywordsFileDBToElasticIndex = async () => {
     const keywordFilePath = process.env.KEYWORDS_DB_FILE_PATH;
     const currentData = [];
+
     fs.createReadStream(keywordFilePath)
       .pipe(csv())
       .on('data', (data) => currentData.push(data))
       .on('end', async () => {
+        logger('Keywords DB Migration').info(`Migrating ${currentData.length} entries.`);
         for (let i = 0; i < currentData.length; i += 1) {
-        // eslint-disable-next-line no-await-in-loop
+          // eslint-disable-next-line no-await-in-loop
           await this.insertDataIntoIndex(currentData[i], this.indices.articles);
         }
       });
