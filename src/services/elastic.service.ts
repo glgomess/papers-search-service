@@ -20,6 +20,8 @@ import logger from '../utils/winston';
 export default class ElasticService {
   client: Client;
 
+  maximumResults: number;
+
   static searchData = {
     articles: 'articles',
   };
@@ -41,6 +43,13 @@ export default class ElasticService {
     this.indices = {
       articles: 'articles',
     };
+
+    /**
+     * Arbitrary number to return all possible articles found.
+     * Should be changed when a Pagination feature is implemented
+     * on the frontend.
+     */
+    this.maximumResults = 10000;
   }
 
   static checkIfIsElasticError(error) {
@@ -168,6 +177,7 @@ export default class ElasticService {
   async getArticlesByKeywords(index: string, keywords: string) {
     const { body } = await this.client.search({
       index,
+      size: this.maximumResults,
       body: {
         query: {
           match_phrase: { keywords },
@@ -176,13 +186,14 @@ export default class ElasticService {
     });
 
     const foundResults = body.hits.hits;
+    const totalFound = body.hits.total.value;
     const formattedResults = [];
 
     for (let i = 0; i < foundResults.length; i += 1) {
       formattedResults.push(new Article(foundResults[i]._source));
     }
 
-    return formattedResults;
+    return { results: formattedResults, total: totalFound };
   }
 
   migrateArticlesFileDBToElasticIndex = async () => {
