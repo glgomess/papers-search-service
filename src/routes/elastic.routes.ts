@@ -24,9 +24,13 @@ routes.get(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const kw = String(req.query.keywords);
+      const { matchAll } = req.query;
+
+      // With this line, we can convert the string to boolean.
+      const shouldMatchAll = (matchAll !== 'false');
       const elasticService = new ElasticService();
       const matches = await elasticService.getArticlesByKeywords(
-        ElasticService.searchData.articles, kw,
+        ElasticService.searchData.articles, kw, shouldMatchAll,
       );
 
       return res.status(200).json(matches);

@@ -174,16 +174,40 @@ export default class ElasticService {
     }
   }
 
-  async getArticlesByKeywords(index: string, keywords: string) {
-    const { body } = await this.client.search({
-      index,
-      size: this.maximumResults,
-      body: {
-        query: {
-          match_phrase: { keywords },
+  async getArticlesByKeywords(index: string, keywords: string, matchAll: boolean) {
+    let result;
+    if (matchAll) {
+      result = await this.client.search({
+        index,
+        size: this.maximumResults,
+        body: {
+          query: {
+            match: {
+              keywords: {
+                query: keywords,
+                operator: 'AND',
+              },
+            },
+          },
         },
-      },
-    });
+      });
+    } else {
+      result = await this.client.search({
+        index,
+        size: this.maximumResults,
+        body: {
+          query: {
+            match: {
+              keywords: {
+                query: keywords,
+              },
+            },
+          },
+        },
+      });
+    }
+
+    const { body } = result;
 
     const foundResults = body.hits.hits;
     const totalFound = body.hits.total.value;
@@ -194,6 +218,11 @@ export default class ElasticService {
     }
 
     return { results: formattedResults, total: totalFound };
+  }
+
+  private static generateSubQueries(keywords: string) {
+    const separatedKeywords = keywords.split(',');
+    return separatedKeywords.map((kw) => ({ term: { keywords: kw } }));
   }
 
   migrateArticlesFileDBToElasticIndex = async () => {
