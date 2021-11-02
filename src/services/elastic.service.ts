@@ -176,6 +176,19 @@ export default class ElasticService {
 
   async getArticlesByKeywords(index: string, keywords: string, matchAll: boolean) {
     let result;
+
+    /**
+       * IMPORTANT: Elastic breaks the keywords into tokens, so the keyword
+       * "smart cities" for instance, is broken into "smart" and "cities",
+       * that is why the same keyword might return different amount of
+       * results based on the "all" or "any" selected by the user.
+       * So the query that should match all keywords, but only contain
+       * the keyword "smart cities" will return all articles which contains
+       * this exact keyword, but the "any" version of the query will return
+       * articles that contains either "smart" or "cities" whithin their keywords.
+       *
+       * Thow only happens with keyword that contain more than one word.
+       */
     if (matchAll) {
       result = await this.client.search({
         index,
@@ -218,11 +231,6 @@ export default class ElasticService {
     }
 
     return { results: formattedResults, total: totalFound };
-  }
-
-  private static generateSubQueries(keywords: string) {
-    const separatedKeywords = keywords.split(',');
-    return separatedKeywords.map((kw) => ({ term: { keywords: kw } }));
   }
 
   migrateArticlesFileDBToElasticIndex = async () => {
