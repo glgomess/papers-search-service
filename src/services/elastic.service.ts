@@ -1,3 +1,4 @@
+/* eslint-disable no-lonely-if */
 import { Client } from '@elastic/elasticsearch';
 import {
   ElasticsearchClientError,
@@ -148,13 +149,13 @@ export default class ElasticService {
     }
   }
 
-  async getAutocompleteData(index: string, keyword: string) {
+  async getKeywordAutocompleteData(index: string, keyword: string) {
     try {
       const { body } = await this.client.search({
         index,
         body: {
           query: {
-            match_phrase: { keyword_equivalent: { query: keyword, analyzer: 'autocomplete' } },
+            match_phrase_prefix: { keyword_equivalent: { query: keyword } },
           },
         },
       });
@@ -174,54 +175,107 @@ export default class ElasticService {
     }
   }
 
-  async getArticlesByKeywords(index: string, keywords: string, matchAll: boolean) {
-    let result;
+  async getAuthorAutocompleteData(index: string, author: string) {
+    try {
+      const { body } = await this.client.search({
+        index,
+        body: {
+          query: {
+            match_phrase_prefix: { main_ref: { query: author } },
+          },
+        },
+      });
 
-    /**
-       * IMPORTANT: Elastic breaks the keywords into tokens, so the keyword
-       * "smart cities" for instance, is broken into "smart" and "cities",
-       * that is why the same keyword might return different amount of
-       * results based on the "all" or "any" selected by the user.
-       * So the query that should match all keywords, but only contain
-       * the keyword "smart cities" will return all articles which contains
-       * this exact keyword, but the "any" version of the query will return
-       * articles that contains either "smart" or "cities" whithin their keywords.
-       *
-       * Thow only happens with keyword that contain more than one word.
-       */
-    if (matchAll) {
-      result = await this.client.search({
-        index,
-        size: this.maximumResults,
-        body: {
-          query: {
-            match: {
-              keywords: {
-                query: keywords,
-                operator: 'AND',
-              },
-            },
-          },
-        },
-      });
+      const foundResults = body.hits.hits;
+      const formattedResults = [];
+      for (let i = 0; i < foundResults.length; i += 1) {
+        formattedResults.push(foundResults[i]._source.main_ref);
+      }
+
+      return formattedResults;
+    } catch (e) {
+      throw new ElasticError('An error occurred while finding suggestions for your search.',
+        500,
+        e.message,
+        `Keyword Searched: ${author}`);
+    }
+  }
+
+  async getArticlesByKeywords(
+    index: string,
+    keywords: string,
+    authors: string,
+    matchAllKeywords: boolean,
+  ) {
+    const isMultiMatchQuery = !!(authors && keywords);
+    const query = { match: {}, multi_match: {} };
+
+    if (isMultiMatchQuery) {
+      if (matchAllKeywords) {
+        query.multi_match = {
+          query: `${authors}, ${keywords}`,
+          type: 'cross_fields',
+          fields: ['keywords', 'authors'],
+          operator: 'and',
+        };
+      } else {
+        query.multi_match = {
+          query: `${keywords} ${authors}`,
+          type: 'cross_fields',
+          fields: ['authors', 'keywords'],
+        };
+      }
+
+      delete query.match;
     } else {
-      result = await this.client.search({
-        index,
-        size: this.maximumResults,
-        body: {
-          query: {
-            match: {
-              keywords: {
-                query: keywords,
-              },
-            },
+      if (authors) {
+        query.match = {
+          authors: {
+            query: authors,
+            operator: 'AND',
           },
-        },
-      });
+        };
+      } else {
+        if (matchAllKeywords) {
+          query.match = {
+            keywords: {
+              query: keywords,
+              operator: 'AND',
+            },
+          };
+        } else {
+          query.match = {
+            keywords: {
+              query: keywords,
+            },
+          };
+        }
+      }
+
+      delete query.multi_match;
     }
 
-    const { body } = result;
+    /**
+   * IMPORTANT: Elastic breaks the keywords into tokens, so the keyword
+   * "smart cities" for instance, is broken into "smart" and "cities",
+   * that is why the same keyword might return different amount of
+   * results based on the "all" or "any" selected by the user.
+   * So the query that should match all keywords, but only contain
+   * the keyword "smart cities" will return all articles which contains
+   * this exact keyword, but the "any" version of the query will return
+   * articles that contains either "smart" or "cities" whithin their keywords.
+   *
+   * Thow only happens with keyword that contain more than one word.
+   */
+    const result = await this.client.search({
+      index,
+      size: this.maximumResults,
+      body: {
+        query,
+      },
+    });
 
+    const { body } = result;
     const foundResults = body.hits.hits;
     const totalFound = body.hits.total.value;
     const formattedResults = [];
@@ -242,6 +296,22 @@ export default class ElasticService {
       .on('data', (data) => currentData.push(data))
       .on('end', async () => {
         logger('Articles DB Migration').info(`Migrating ${currentData.length} entries.`);
+        for (let i = 0; i < currentData.length; i += 1) {
+          // eslint-disable-next-line no-await-in-loop
+          await this.insertDataIntoIndex(currentData[i], this.indices.articles);
+        }
+      });
+  };
+
+  migrateAuthorsFileDBToElasticIndex = async () => {
+    const articlesFilePath = process.env.AUTHORS_DB_FILE_PATH;
+    const currentData = [];
+
+    fs.createReadStream(articlesFilePath)
+      .pipe(csv())
+      .on('data', (data) => currentData.push(data))
+      .on('end', async () => {
+        logger('Authors DB Migration').info(`Migrating ${currentData.length} entries.`);
         for (let i = 0; i < currentData.length; i += 1) {
           // eslint-disable-next-line no-await-in-loop
           await this.insertDataIntoIndex(currentData[i], this.indices.articles);
