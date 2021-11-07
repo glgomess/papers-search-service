@@ -260,7 +260,39 @@ export default class ElasticService {
       formattedResults.push(new Article(foundResults[i]._source));
     }
 
-    return { results: formattedResults, total: totalFound };
+    const keywordsRank = ElasticService.rankKeywords(formattedResults, keywords);
+
+    return { results: formattedResults, total: totalFound, keywordsRank };
+  }
+
+  static rankKeywords(articles: Article[], keywordsSearched: string) {
+    const keywordsSearchedArray = keywordsSearched.split(',');
+    const relatedKeywordsHashTable = {};
+
+    for (let i = 0; i < articles.length; i += 1) {
+      const articleKeywords = articles[i].keywords.split(',');
+      for (let j = 0; j < articleKeywords.length; j += 1) {
+        const kw = articleKeywords[j].trim();
+        if (!keywordsSearchedArray.includes(kw)) {
+          if (!relatedKeywordsHashTable[kw]) {
+            relatedKeywordsHashTable[kw] = 1;
+          } else {
+            relatedKeywordsHashTable[kw] += 1;
+          }
+        }
+      }
+    }
+
+    const relatedKeywordsArray = Object.entries(relatedKeywordsHashTable);
+    const sortedRelatedKeywordsArray = relatedKeywordsArray.sort(
+      (firstElem:any, secondElem:any) => secondElem[1] - firstElem[1],
+    );
+
+    /**
+     * Here we return an arbitrary amount of related keywords.
+     * Can be changed if needed.
+     */
+    return sortedRelatedKeywordsArray.slice(0, 10);
   }
 
   migrateArticlesFileDBToElasticIndex = async () => {
