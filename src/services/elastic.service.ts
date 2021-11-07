@@ -104,30 +104,6 @@ export default class ElasticService {
     }
   }
 
-  async createArticleIndexMapping() {
-    try {
-      await this.client.indices.putMapping({
-        index: this.indices.articles,
-        include_type_name: true,
-        type: 'keyword',
-        body: {
-          properties: {
-            keyword_equivalent: {
-              type: 'text',
-              analyzer: 'autocomplete',
-              search_analyzer: 'standard',
-            },
-            parent_topic: {
-              type: 'text',
-            },
-          },
-        },
-      });
-    } catch (e) {
-      throw new ElasticError('Elastic could not create Articles mapping.', 500, e.message);
-    }
-  }
-
   async deleteIndices(indexName: string) {
     try {
       await this.client.indices.delete({ index: indexName });
@@ -201,7 +177,7 @@ export default class ElasticService {
     }
   }
 
-  async getArticlesByKeywords(
+  async getArticles(
     index: string,
     keywords: string,
     authors: string,

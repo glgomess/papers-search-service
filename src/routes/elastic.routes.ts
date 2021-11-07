@@ -45,7 +45,7 @@ routes.get(
       // With this line, we can convert the string to boolean.
       const shouldMatchAllKeywords = (matchKeywords !== 'false');
       const elasticService = new ElasticService();
-      const matches = await elasticService.getArticlesByKeywords(
+      const matches = await elasticService.getArticles(
         ElasticService.searchData.articles,
         kw,
         authors,
@@ -66,9 +66,6 @@ routes.post(
       const elasticService = new ElasticService();
       // Create indices.
       await elasticService.createArticleIndex();
-
-      // Create mappings.
-      await elasticService.createArticleIndexMapping();
 
       // Migrate data.
       // Maybe migrate to different indexes?
