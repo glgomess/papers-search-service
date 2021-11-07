@@ -11,7 +11,22 @@ routes.get(
       const kw = String(req.query.kw);
       const elasticService = new ElasticService();
       // eslint-disable-next-line max-len
-      const matches = await elasticService.getAutocompleteData(ElasticService.searchData.articles, kw);
+      const matches = await elasticService.getKeywordAutocompleteData(ElasticService.searchData.articles, kw);
+      return res.status(200).json(matches);
+    } catch (e) {
+      next(e);
+    }
+  },
+);
+
+routes.get(
+  '/search/authors',
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const kw = String(req.query.author);
+      const elasticService = new ElasticService();
+      // eslint-disable-next-line max-len
+      const matches = await elasticService.getAuthorAutocompleteData(ElasticService.searchData.articles, kw);
       return res.status(200).json(matches);
     } catch (e) {
       next(e);
@@ -24,13 +39,17 @@ routes.get(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const kw = String(req.query.keywords);
-      const { matchAll } = req.query;
+      const authors = String(req.query.authors);
+      const { matchKeywords } = req.query;
 
       // With this line, we can convert the string to boolean.
-      const shouldMatchAll = (matchAll !== 'false');
+      const shouldMatchAllKeywords = (matchKeywords !== 'false');
       const elasticService = new ElasticService();
       const matches = await elasticService.getArticlesByKeywords(
-        ElasticService.searchData.articles, kw, shouldMatchAll,
+        ElasticService.searchData.articles,
+        kw,
+        authors,
+        shouldMatchAllKeywords,
       );
 
       return res.status(200).json(matches);
@@ -52,8 +71,10 @@ routes.post(
       await elasticService.createArticleIndexMapping();
 
       // Migrate data.
+      // Maybe migrate to different indexes?
       await elasticService.migrateArticlesFileDBToElasticIndex();
       await elasticService.migrateKeywordsFileDBToElasticIndex();
+      await elasticService.migrateAuthorsFileDBToElasticIndex();
 
       logger('Elastic').info('Articles Index created and data migrated.');
       return res.status(200).json();
